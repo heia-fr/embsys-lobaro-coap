@@ -426,15 +426,15 @@ CoAP_Result_t _rom CoAP_SendMsg(CoAP_Message_t* Msg, SocketHandle_t socketHandle
 	PrintEndpoint(&(pked.remoteEp));
 	INFO("\n");
 
-	DEBUG("Hex: ");
+	//DEBUG("Hex: ");
 	for (i = 0; i < pked.size; i++) {
-		DEBUG("%02x ", pked.pData[i]);
+		//DEBUG("%02x ", pked.pData[i]);
 	}
-	DEBUG("\r\nRaw: \"");
+	//DEBUG("\r\nRaw: \"");
 	for (i = 0; i < pked.size; i++) {
-		DEBUG("%c", CoAP_CharPrintable(pked.pData[i]));
+		//DEBUG("%c", CoAP_CharPrintable(pked.pData[i]));
 	}
-	DEBUG("\"\r\n");
+	//DEBUG("\"\r\n");
 
 	bool sendResult;
 #if DEBUG_RANDOM_DROP_OUTGOING_PERCENTAGE > 0
@@ -537,6 +537,18 @@ void _rom CoAP_PrintMsg(CoAP_Message_t* msg) {
 		LOG_INFO(" MsgId=%"PRIu16, msg->MessageID);
 		LOG_INFO(" Timestamp=%"PRIu32, msg->Timestamp);
 		LOG_INFO(" PayloadLen=%"PRIu16, msg->PayloadLength);
+		LOG_INFO(" TokenLen=%"PRIu16, msg->Token.Length);
+		uint8_t tokenBytes = msg->Token.Length;
+		if (tokenBytes > 0) {
+			#define LOG_MSG_SIZE 32
+			char logMsg[LOG_MSG_SIZE] = {0};
+			sprintf(logMsg, "Token: 0x");
+			int length = strlen(logMsg);
+		    for (int i = 0; i < tokenBytes; i++) {
+				length += snprintf(logMsg + length, LOG_MSG_SIZE-length, "%02x", msg->Token.Token[i]);
+		    }
+			LOG_INFO(logMsg);
+	    } 
 		LOG_INFO("\n");
 		return;
 	}
@@ -566,9 +578,7 @@ void _rom CoAP_PrintMsg(CoAP_Message_t* msg) {
 		for (i = 0; i < tokenBytes; i++) {
 			LOG_DEBUG("%02x", msg->Token.Token[i]);
 		}
-	} else {
-		LOG_DEBUG("*Token: %u Byte -> 0", tokenBytes);
-	}
+	} 
 
 	uint8_t code = msg->Code;
 	LOG_DEBUG("\r\n*Code: %d.%02d (0x%02x) [%s]\r\n", code >> 5u, code & 31u, code, CoAP_CodeName(code));

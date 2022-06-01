@@ -119,18 +119,15 @@ static CoAP_Result_t _rom CoAP_UnlinkInteractionFromListByHandle(CoAP_Interactio
 }
 
 static CoAP_Result_t _rom CoAP_AppendInteractionToList(CoAP_Interaction_t** pListStart, CoAP_Interaction_t* pInteractionToAdd) {
-//printf("CoAP_AppendInteractionToList\r\n");
 	if (pInteractionToAdd == NULL)
 		return COAP_ERR_ARGUMENT;
 
 	if (*pListStart == NULL) //List empty? create new first element
 	{
-//printf("Create new list\r\n");
 		*pListStart = pInteractionToAdd;
 		(*pListStart)->next = NULL;
 	} else //append new element at end
 	{
-//printf("Appending to list\r\n");
 		CoAP_Interaction_t* pTrans = *pListStart;
 		while (pTrans->next != NULL)
 			pTrans = pTrans->next;
@@ -225,7 +222,6 @@ CoAP_Result_t _rom CoAP_EnqueueLastInteraction(CoAP_Interaction_t* pInteractionT
 
 //we act as a CoAP Client (sending requests) in this interaction
 CoAP_Result_t _rom CoAP_StartNewClientInteraction(CoAP_Message_t* pMsgReq, SocketHandle_t socketHandle, NetEp_t* ServerEp, CoAP_RespHandler_fn_t cb) {
-printf("CoAP_StartNewClientInteraction\r\n");
 	if (pMsgReq == NULL || CoAP_MsgIsRequest(pMsgReq) == false)
 		return COAP_ERR_ARGUMENT;
 
@@ -242,15 +238,14 @@ printf("CoAP_StartNewClientInteraction\r\n");
 
 	newIA->Role = COAP_ROLE_CLIENT;
 	newIA->State = COAP_STATE_READY_TO_REQUEST;
-printf("calling CoAP_AppendInteractionToList\r\n");
+	
 	CoAP_AppendInteractionToList(&(CoAP.pInteractions), newIA);
 
 	return COAP_OK;
 }
 
 CoAP_Result_t _rom CoAP_StartNewGetRequest(char* UriString, SocketHandle_t socketHandle, NetEp_t* ServerEp, CoAP_RespHandler_fn_t cb) {
-
-	CoAP_Message_t* pReqMsg = CoAP_CreateMessage(CON, REQ_GET, CoAP_GetNextMid(), NULL, 0, 0, CoAP_GenerateToken());
+	CoAP_Message_t* pReqMsg = CoAP_CreateMessage(NON, REQ_GET, CoAP_GetNextMid(), NULL, 0, 0, CoAP_GenerateToken());
 
 	if (pReqMsg != NULL) {
 		CoAP_AppendUriOptionsFromString(&(pReqMsg->pOptionsList), UriString);
@@ -262,17 +257,15 @@ CoAP_Result_t _rom CoAP_StartNewGetRequest(char* UriString, SocketHandle_t socke
 	return COAP_ERR_OUT_OF_MEMORY;
 }
 
-CoAP_Result_t _rom CoAP_StartNewRequest(CoAP_MessageCode_t type, const char* UriString, SocketHandle_t socketHandle, NetEp_t* ServerEp, CoAP_RespHandler_fn_t cb, uint8_t *buf, size_t size) {
-printf("CoAP_StartNewRequest\r\n");
+CoAP_Result_t _rom CoAP_StartNewRequest(CoAP_MessageCode_t type, CoAP_MessageType_t msgType, const char* UriString, SocketHandle_t socketHandle, NetEp_t* ServerEp, CoAP_RespHandler_fn_t cb, uint8_t *buf, size_t size) {
 	if (type != REQ_GET && type != REQ_POST && type != REQ_PUT && type != REQ_DELETE) {
 		ERROR("- Invalid request type\r\n");
 		return COAP_ERR_ARGUMENT;
 	}
 
-	CoAP_Message_t* pReqMsg = CoAP_CreateMessage(CON, type, CoAP_GetNextMid(), buf, size, size, CoAP_GenerateToken());
+	CoAP_Message_t* pReqMsg = CoAP_CreateMessage(msgType, type, CoAP_GetNextMid(), buf, size, size, CoAP_GenerateToken());
 
 	if (pReqMsg != NULL) {
-printf("Calling CoAP_AppendUriOptionsFromString\r\n");
 		CoAP_AppendUriOptionsFromString(&(pReqMsg->pOptionsList), UriString);
 		return CoAP_StartNewClientInteraction(pReqMsg, socketHandle, ServerEp, cb);
 	}
